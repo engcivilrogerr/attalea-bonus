@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Bônus - Attalea Construções</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Ícones SVG simplificados
+        const Icons = {
+            Plus: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>,
+            Edit: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>,
+            Trash: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+            Users: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+            Calendar: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+            Dollar: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+            File: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+            Download: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>,
+            Upload: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>,
+            Printer: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>,
+            Save: () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+        };
+
+        const BonusApp = () => {
+            const [activeTab, setActiveTab] = useState('dashboard');
+            const [employees, setEmployees] = useState([]);
+            const [productions, setProductions] = useState([]);
+            const [selectedTeam, setSelectedTeam] = useState('Equipe 1');
+            const [showEmployeeForm, setShowEmployeeForm] = useState(false);
+            const [editingEmployee, setEditingEmployee] = useState(null);
+            const [startDate, setStartDate] = useState('2025-10-21');
+            const [endDate, setEndDate] = useState('2025-11-09');
+            const [showDateConfig, setShowDateConfig] = useState(false);
+            const [selectedProductionCell, setSelectedProductionCell] = useState(null);
+            const [showProductionModal, setShowProductionModal] = useState(false);
+
+            const teams = ['Equipe 1', 'Equipe 2', 'Equipe 3', 'Equipe 4', 'Equipe 5', 'Equipe 6', 'Apoio'];
+            const positions = [
+                { name: 'Encarregado', baseValue: 60 },
+                { name: 'Enc de Obras', baseValue: 60 },
+                { name: 'Engenheiro', baseValue: 80 },
+                { name: 'Operador de Retro', baseValue: 50 },
+                { name: 'Op. Maq. Pesadas', baseValue: 50 },
+                { name: 'Bombeiro', baseValue: 50 },
+                { name: 'Pedreiro', baseValue: 50 },
+                { name: 'Servente', baseValue: 50 },
+                { name: 'Mot. Caminhão', baseValue: 40 }
+            ];
+
+            useEffect(() => {
+                const saved = localStorage.getItem('bonusData');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    setEmployees(data.employees || []);
+                    setProductions(data.productions || []);
+                    setStartDate(data.startDate || '2025-10-21');
+                    setEndDate(data.endDate || '2025-11-09');
+                }
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('bonusData', JSON.stringify({
+                    employees,
+                    productions,
+                    startDate,
+                    endDate
+                }));
+            }, [employees, productions, startDate, endDate]);
+
+            const addEmployee = (employee) => {
+                if (editingEmployee) {
+                    setEmployees(employees.map(e => e.id === editingEmployee.id ? { ...employee, id: editingEmployee.id } : e));
+                    setEditingEmployee(null);
+                } else {
+                    setEmployees([...employees, { ...employee, id: Date.now() }]);
+                }
+                setShowEmployeeForm(false);
+            };
+
+            const deleteEmployee = (id) => {
+                if (window.confirm('Deseja realmente excluir este funcionário?')) {
+                    setEmployees(employees.filter(e => e.id !== id));
+                }
+            };
+
+            const updateProduction = (date, employeeId, value, workedTeam = null, observation = '') => {
+                const key = `${date}-${employeeId}`;
+                const existing = productions.find(p => p.key === key);
+ 
+                if (existing) {
+                    setProductions(productions.map(p => p.key === key ? {
+                        ...p,
+                        value: parseFloat(value) || 0,
+                        workedTeam: workedTeam !== undefined ? workedTeam : p.workedTeam,
+                        observation: observation !== undefined ? observation : p.observation
+                    } : p));
+                } else {
+                    setProductions([...productions, {
+                        key,
+                        date,
+                        employeeId,
+                        value: parseFloat(value) || 0,
+                        workedTeam,
+                        observation
+                    }]);
+                }
+            };
+
+            const getProductionValue = (date, employeeId) => {
+                const prod = productions.find(p => p.date === date && p.employeeId === employeeId);
+                return prod ? prod.value : 0;
+            };
+
+            const getProductionDetails = (date, employeeId) => {
+                return productions.find(p => p.date === date && p.employeeId === employeeId);
+            };
+
+            const calculateEmployeeTotal = (employeeId) => {
+                return productions
+                    .filter(p => p.employeeId === employeeId)
+                    .reduce((sum, p) => sum + p.value, 0);
+            };
+
+            const getDatesForMonth = () => {
+                const dates = [];
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+ 
+                for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = d.getFullYear();
+                    dates.push(`${day}/${month}/${year}`);
+                }
+ 
+                return dates;
+            };
+
+            const openProductionModal = (date, employee) => {
+                const details = getProductionDetails(date, employee.id);
+                setSelectedProductionCell({
+                    date,
+                    employee,
+                    value: details?.value || 0,
+                    workedTeam: details?.workedTeam || null,
+                    observation: details?.observation || ''
+                });
+                setShowProductionModal(true);
+            };
+
+            const saveProductionDetails = () => {
+                if (selectedProductionCell) {
+                    updateProduction(
+                        selectedProductionCell.date,
+                        selectedProductionCell.employee.id,
+                        selectedProductionCell.value,
+                        selectedProductionCell.workedTeam,
+                        selectedProductionCell.observation
+                    );
+                    setShowProductionModal(false);
+                    setSelectedProductionCell(null);
+                }
+            };
+
+            const exportData = () => {
+                const dataToExport = {
+                    employees,
+                    productions,
+                    startDate,
+                    endDate,
+                    exportDate: new Date().toISOString(),
+                    version: '1.0'
+                };
+ 
+                const dataStr = JSON.stringify(dataToExport, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `bonus-backup-${new Date().toISOString().split('T')\[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+ 
+                alert('✅ Dados exportados com sucesso!');
+            };
+
+            const importData = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importedData = JSON.parse(e.target.result);
+ 
+                        if (!importedData.employees || !importedData.productions) {
+                            alert('❌ Arquivo inválido!');
+                            return;
+                        }
+
+                        const confirmImport = window.confirm(
+                            `Importar ${importedData.employees.length} funcionários e ${importedData.productions.length} registros?\\n\\n⚠️ Isso substituirá os dados atuais!`
+                        );
+
+                        if (confirmImport) {
+                            setEmployees(importedData.employees);
+                            setProductions(importedData.productions);
+                            if (importedData.startDate) setStartDate(importedData.startDate);
+                            if (importedData.endDate) setEndDate(importedData.endDate);
+                            alert('✅ Dados importados com sucesso!');
+                        }
+                    } catch (error) {
+                        alert('❌ Erro ao importar arquivo!');
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            };
+
+            const teamEmployees = employees.filter(e => e.team === selectedTeam);
+            const dates = getDatesForMonth();
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                                Sistema de Gestão de Bônus de Produção
+                            </h1>
+                            <p className="text-gray-600 mb-4">Attalea Construções Ltda - Rede de Esgoto</p>
+ 
+                            <div className="flex flex-wrap gap-2">
+                                <button
+                                    onClick={exportData}
+                                    className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
+                                >
+                                    <Icons.Download />
+                                    Exportar Dados
+                                </button>
+ 
+                                <label className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer text-sm">
+                                    <Icons.Upload />
+                                    Importar Dados
+                                    <input
+                                        type="file"
+                                        accept=".json"
+                                        onChange={importData}
+                                        className="hidden"
+                                    />
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-lg mb-6">
+                            <div className="flex border-b overflow-x-auto">
+                                {[
+                                    { id: 'dashboard', label: 'Dashboard', icon: Icons.File },
+                                    { id: 'employees', label: 'Funcionários', icon: Icons.Users },
+                                    { id: 'production', label: 'Produção', icon: Icons.Calendar },
+                                    { id: 'report', label: 'Relatório', icon: Icons.Dollar }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap ${
+                                            activeTab === tab.id
+                                                ? 'border-b-2 border-blue-500 text-blue-600'
+                                                : 'text-gray-600 hover:text-gray-800'
+                                        }`}
+                                    >
+                                        <tab.icon />
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {activeTab === 'dashboard' && (
+                            <div className="space-y-6">
+                                <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
+                                    <h3 className="font-bold text-blue-800 mb-1">💡 Dica: Faça Backup Regular!</h3>
+                                    <p className="text-sm text-blue-700">
+                                        Use "Exportar Dados" para salvar backup e transferir entre dispositivos.
+                                    </p>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="bg-white rounded-lg shadow-lg p-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-blue-100 p-3 rounded-lg">
+                                                <Icons.Users />
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600 text-sm">Funcionários</p>
+                                                <p className="text-2xl font-bold text-gray-800">{employees.length}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+ 
+                                    <div className="bg-white rounded-lg shadow-lg p-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-green-100 p-3 rounded-lg">
+                                                <Icons.Dollar />
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600 text-sm">Bônus Total</p>
+                                                <p className="text-2xl font-bold text-gray-800">
+                                                    R$ {employees.reduce((sum, emp) => sum + calculateEmployeeTotal(emp.id), 0).toFixed(2)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+ 
+                                    <div className="bg-white rounded-lg shadow-lg p-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="bg-purple-100 p-3 rounded-lg">
+                                                <Icons.Calendar />
+                                            </div>
+                                            <div>
+                                                <p className="text-gray-600 text-sm">Equipes</p>
+                                                <p className="text-2xl font-bold text-gray-800">{teams.length}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="bg-white rounded-lg shadow-lg p-6">
+                                    <h2 className="text-xl font-bold text-gray-800 mb-4">Resumo por Equipe</h2>
+                                    <div className="space-y-3">
+                                        {teams.map(team => {
+                                            const teamEmps = employees.filter(e => e.team === team);
+                                            const teamTotal = teamEmps.reduce((sum, emp) => sum + calculateEmployeeTotal(emp.id), 0);
+                                            return (
+                                                <div key={team} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                                                    <div>
+                                                        <p className="font-semibold text-gray-800">{team}</p>
+                                                        <p className="text-sm text-gray-600">{teamEmps.length} funcionários</p>
+                                                    </div>
+                                                    <p className="text-lg font-bold text-green-600">R$ {teamTotal.toFixed(2)}</p>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'employees' && (
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <div className="flex justify-between items-center mb-6">
+                                    <h2 className="text-xl font-bold text-gray-800">Gerenciar Funcionários</h2>
+                                    <button
+                                        onClick={() => {
+                                            setEditingEmployee(null);
+                                            setShowEmployeeForm(true);
+                                        }}
+                                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                                    >
+                                        <Icons.Plus />
+                                        Adicionar
+                                    </button>
+                                </div>
+
+                                {showEmployeeForm && (
+                                    <EmployeeForm
+                                        positions={positions}
+                                        teams={teams}
+                                        onSave={addEmployee}
+                                        onCancel={() => {
+                                            setShowEmployeeForm(false);
+                                            setEditingEmployee(null);
+                                        }}
+                                        initialData={editingEmployee}
+                                    />
+                                )}
+
+                                <div className="space-y-4 mt-6">
+                                    {teams.map(team => {
+                                        const teamEmps = employees.filter(e => e.team === team);
+                                        if (teamEmps.length === 0) return null;
+ 
+                                        return (
+                                            <div key={team} className="border rounded-lg p-4">
+                                                <h3 className="font-bold text-gray-800 mb-3">{team}</h3>
+                                                <div className="space-y-2">
+                                                    {teamEmps.map(emp => (
+                                                        <div key={emp.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                                                            <div>
+                                                                <p className="font-semibold text-gray-800">{emp.name}</p>
+                                                                <p className="text-sm text-gray-600">
+                                                                    {emp.position} - R$ {emp.dailyValue.toFixed(2)}/dia
+                                                                    {emp.badge && <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">
+                                                                        Ficha: {emp.badge}
+                                                                    </span>}
+                                                                </p>
+                                                            </div>
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingEmployee(emp);
+                                                                        setShowEmployeeForm(true);
+                                                                    }}
+                                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                                                                >
+                                                                    <Icons.Edit />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => deleteEmployee(emp.id)}
+                                                                    className="p-2 text-red-600 hover:bg-red-50 rounded"
+                                                                >
+                                                                    <Icons.Trash />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'production' && (
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
+                                    <div className="flex-1 min-w-\[200px]">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Equipe
+                                        </label>
+                                        <select
+                                            value={selectedTeam}
+                                            onChange={(e) => setSelectedTeam(e.target.value)}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                        >
+                                            {teams.map(team => (
+                                                <option key={team} value={team}>{team}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowDateConfig(!showDateConfig)}
+                                        className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+                                    >
+                                        <Icons.Calendar />
+                                        Período
+                                    </button>
+                                </div>
+
+                                {showDateConfig && (
+                                    <div className="bg-indigo-50 p-4 rounded-lg mb-6">
+                                        <h3 className="font-bold text-gray-800 mb-3">Configurar Período</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Data Inicial</label>
+                                                <input
+                                                    type="date"
+                                                    value={startDate}
+                                                    onChange={(e) => setStartDate(e.target.value)}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">Data Final</label>
+                                                <input
+                                                    type="date"
+                                                    value={endDate}
+                                                    onChange={(e) => setEndDate(e.target.value)}
+                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                                />
+                                            </div>
+                                        </div>
+                                        <p className="text-sm text-gray-600 mt-3">
+                                            Total: {dates.length} dias
+                                        </p>
+                                    </div>
+                                )}
+
+                                {teamEmployees.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-500">
+                                        Nenhum funcionário cadastrado nesta equipe.
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="bg-gray-100">
+                                                    <th className="px-4 py-2 text-left font-semibold sticky left-0 bg-gray-100 z-10">
+                                                        Funcionário
+                                                    </th>
+                                                    <th className="px-4 py-2 text-left font-semibold">Cargo</th>
+                                                    {dates.map(date => (
+                                                        <th key={date} className="px-2 py-2 text-center font-semibold whitespace-nowrap">
+                                                            {date.substring(0, 5)}
+                                                        </th>
+                                                    ))}
+                                                    <th className="px-4 py-2 text-right font-semibold">Total</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {teamEmployees.map(emp => (
+                                                    <tr key={emp.id} className="border-b hover:bg-gray-50">
+                                                        <td className="px-4 py-2 font-medium sticky left-0 bg-white z-10">
+                                                            {emp.name}
+                                                        </td>
+                                                        <td className="px-4 py-2 text-gray-600">{emp.position}</td>
+                                                        {dates.map(date => (
+                                                            <td key={date} className="px-2 py-2">
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.01"
+                                                                        value={getProductionValue(date, emp.id) || ''}
+                                                                        onChange={(e) => updateProduction(date, emp.id, e.target.value)}
+                                                                        onClick={() => openProductionModal(date, emp)}
+                                                                        className="w-16 px-2 py-1 border border-gray-300 rounded text-center cursor-pointer"
+                                                                        placeholder="0"
+                                                                        title="Clique para detalhes"
+                                                                    />
+                                                                    {getProductionDetails(date, emp.id)?.workedTeam && (
+                                                                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full" title="Outra equipe"></span>
+                                                                    )}
+                                                                    {getProductionDetails(date, emp.id)?.observation && (
+                                                                        <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-blue-500 rounded-full" title="Observação"></span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        ))}
+                                                        <td className="px-4 py-2 text-right font-bold text-green-600">
+                                                            R$ {calculateEmployeeTotal(emp.id).toFixed(2)}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr className="bg-gray-100 font-bold">
+                                                    <td colSpan={2} className="px-4 py-3">TOTAL</td>
+                                                    {dates.map(date => {
+                                                        const dayTotal = teamEmployees.reduce((sum, emp) =>
+                                                            sum + getProductionValue(date, emp.id), 0
+                                                        );
+                                                        return (
+                                                            <td key={date} className="px-2 py-3 text-center">
+                                                                {dayTotal > 0 ? dayTotal.toFixed(0) : '-'}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                    <td className="px-4 py-3 text-right text-green-600">
+                                                        R$ {teamEmployees.reduce((sum, emp) => sum + calculateEmployeeTotal(emp.id), 0).toFixed(2)}
+                                                    </td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'report' && (
+                            <div className="bg-white rounded-lg shadow-lg p-6">
+                                <h2 className="text-xl font-bold text-gray-800 mb-6">Relatório Completo</h2>
+ 
+                                {employees.length === 0 ? (
+                                    <div className="text-center py-12 text-gray-500">
+                                        Nenhum funcionário cadastrado.
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {teams.map(team => {
+                                            const teamEmps = employees.filter(e => e.team === team);
+                                            if (teamEmps.length === 0) return null;
+ 
+                                            const teamTotal = teamEmps.reduce((sum, emp) => sum + calculateEmployeeTotal(emp.id), 0);
+                                            const maxValue = Math.max(...teamEmps.map(emp => calculateEmployeeTotal(emp.id)));
+ 
+                                            return (
+                                                <div key={team} className="border-2 border-gray-200 rounded-lg p-5">
+                                                    <div className="flex justify-between items-center mb-4 pb-3 border-b-2">
+                                                        <h3 className="text-lg font-bold">{team}</h3>
+                                                        <p className="text-xl font-bold text-green-600">R$ {teamTotal.toFixed(2)}</p>
+                                                    </div>
+ 
+                                                    <div className="space-y-3">
+                                                        {teamEmps
+                                                            .sort((a, b) => calculateEmployeeTotal(b.id) - calculateEmployeeTotal(a.id))
+                                                            .map(emp => {
+                                                                const total = calculateEmployeeTotal(emp.id);
+                                                                const percentage = maxValue > 0 ? (total / maxValue) * 100 : 0;
+ 
+                                                                return (
+                                                                    <div key={emp.id} className="bg-gray-50 rounded-lg p-4">
+                                                                        <div className="flex justify-between items-start mb-2">
+                                                                            <div className="flex-1">
+                                                                                <p className="font-semibold">{emp.name}</p>
+                                                                                <p className="text-sm text-gray-600">
+                                                                                    {emp.position} • R$ {emp.dailyValue.toFixed(2)}/dia
+                                                                                </p>
+                                                                            </div>
+                                                                            <div className="text-right ml-4">
+                                                                                <p className="text-lg font-bold text-green-600">R$ {total.toFixed(2)}</p>
+                                                                                <p className="text-xs text-gray-500">
+                                                                                    {productions.filter(p => p.employeeId === emp.id && p.value > 0).length} dias
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="w-full bg-gray-200 rounded-full h-3">
+                                                                            <div
+                                                                                className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full"
+                                                                                style={{ width: `${percentage}%` }}
+                                                                            ></div>
+                                                                        </div>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+
+                                        <div className="mt-6 pt-6 border-t-2 bg-green-50 p-6 rounded-lg">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-lg font-bold">TOTAL GERAL</span>
+                                                <span className="text-2xl font-bold text-green-600">
+                                                    R$ {employees.reduce((sum, emp) => sum + calculateEmployeeTotal(emp.id), 0).toFixed(2)}
+                                                </span>
+                                            </div>
+                                            <p className="text-sm text-gray-600 mt-2">
+                                                {employees.length} funcionários
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {showProductionModal && selectedProductionCell && (
+                            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                                <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+                                    <h3 className="text-xl font-bold text-gray-800 mb-4">
+                                        Detalhes da Produção
+                                    </h3>
+ 
+                                    <div className="space-y-4">
+                                        <div>
+                                            <p className="text-sm text-gray-600">Funcionário</p>
+                                            <p className="font-semibold">{selectedProductionCell.employee.name}</p>
+                                        </div>
+ 
+                                        <div>
+                                            <p className="text-sm text-gray-600">Data</p>
+                                            <p className="font-semibold">{selectedProductionCell.date}</p>
+                                        </div>
+ 
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Valor (R$)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={selectedProductionCell.value || ''}
+                                                onChange={(e) => setSelectedProductionCell({
+                                                    ...selectedProductionCell,
+                                                    value: parseFloat(e.target.value) || 0
+                                                })}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Trabalhou em outra equipe?
+                                            </label>
+                                            <select
+                                                value={selectedProductionCell.workedTeam || ''}
+                                                onChange={(e) => setSelectedProductionCell({
+                                                    ...selectedProductionCell,
+                                                    workedTeam: e.target.value || null
+                                                })}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                            >
+                                                <option value="">Não (equipe: {selectedProductionCell.employee.team})</option>
+                                                {teams.filter(t => t !== selectedProductionCell.employee.team).map(team => (
+                                                    <option key={team} value={team}>{team}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Observações
+                                            </label>
+                                            <textarea
+                                                value={selectedProductionCell.observation || ''}
+                                                onChange={(e) => setSelectedProductionCell({
+                                                    ...selectedProductionCell,
+                                                    observation: e.target.value
+                                                })}
+                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                                                rows="3"
+                                                placeholder="Ex: Hora extra, substituição..."
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3 mt-6">
+                                        <button
+                                            onClick={saveProductionDetails}
+                                            className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                        >
+                                            Salvar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowProductionModal(false);
+                                                setSelectedProductionCell(null);
+                                            }}
+                                            className="flex-1 px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                                        >
+                                            Cancelar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const EmployeeForm = ({ positions, teams, onSave, onCancel, initialData }) => {
+            const [formData, setFormData] = useState(initialData || {
+                name: '',
+                badge: '',
+                position: positions[0].name,
+                team: teams[0],
+                dailyValue: positions[0].baseValue
+            });
+
+            const handlePositionChange = (position) => {
+                const positionData = positions.find(p => p.name === position);
+                setFormData({
+                    ...formData,
+                    position,
+                    dailyValue: positionData.baseValue
+                });
+            };
+
+            return (
+                <div className="bg-blue-50 p-6 rounded-lg mb-6">
+                    <h3 className="text-lg font-bold text-gray-800 mb-4">
+                        {initialData ? 'Editar' : 'Novo'} Funcionário
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Nome *</label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Ficha</label>
+                            <input
+                                type="text"
+                                value={formData.badge}
+                                onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Cargo *</label>
+                            <select
+                                value={formData.position}
+                                onChange={(e) => handlePositionChange(e.target.value)}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            >
+                                {positions.map(pos => (
+                                    <option key={pos.name} value={pos.name}>{pos.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Equipe *</label>
+                            <select
+                                value={formData.team}
+                                onChange={(e) => setFormData({ ...formData, team: e.target.value })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            >
+                                {teams.map(team => (
+                                    <option key={team} value={team}>{team}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Valor Diário (R$) *</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={formData.dailyValue}
+                                onChange={(e) => setFormData({ ...formData, dailyValue: parseFloat(e.target.value) || 0 })}
+                                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                        <button
+                            onClick={() => {
+                                if (!formData.name.trim()) {
+                                    alert('Preencha o nome');
+                                    return;
+                                }
+                                onSave(formData);
+                            }}
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            {initialData ? 'Salvar' : 'Adicionar'}
+                        </button>
+                        <button
+                            onClick={onCancel}
+                            className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400"
+                        >
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<BonusApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
